@@ -75,17 +75,21 @@ impl TokenType {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Clone)] 
 pub struct Token {
     pub token_type: TokenType,
     pub literal: String,
+    pub line: usize,
+    pub column: usize,
 }
 
+#[derive(Clone)]
 pub struct Lexer {
     input: String,
     position: usize,
     read_position: usize,
-    ch: u8,
+    line: usize,
+    column: usize,
 }
 
 impl Lexer {
@@ -94,7 +98,8 @@ impl Lexer {
             input: input,
             position: 0,
             read_position: 0,
-            ch: 0,
+            line: 1,
+            column: 1,
         }
     }
     pub fn peek_char(&self) -> u8 {
@@ -104,11 +109,18 @@ impl Lexer {
             self.input.as_bytes()[self.read_position]
         }
     }
+    pub fn peek_token(&self) -> Token {
+        let mut lexer = self.clone();
+        lexer.next_token().clone()
+    }
     pub fn next_token(&mut self) -> Token {
-        let token = match self.ch {
+        let mut ch = self.read_char();
+        match ch {
             b'%' => Token {
                 token_type: TokenType::Percent,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b'&' => {
                 match self.peek_char() {
@@ -117,11 +129,15 @@ impl Lexer {
                         Token {
                             token_type: TokenType::OperatorAnd,
                             literal: "&&".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     _ => Token {
                         token_type: TokenType::Illegal,
-                        literal: self.ch.to_string(),
+                        literal: ch.to_string(),
+                        line: self.line,
+                        column: self.column,
                     },
                 }
             },
@@ -132,11 +148,15 @@ impl Lexer {
                         Token {
                             token_type: TokenType::OperatorOr,
                             literal: "||".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     _ => Token {
                         token_type: TokenType::Illegal,
-                        literal: self.ch.to_string(),
+                        literal: ch.to_string(),
+                        line: self.line,
+                        column: self.column,
                     },
                 }
             },
@@ -147,11 +167,15 @@ impl Lexer {
                         Token {
                             token_type: TokenType::OperatorNotEqual,
                             literal: "!=".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     _ => Token {
                         token_type: TokenType::OperatorNot,
-                        literal: self.ch.to_string(),
+                        literal: ch.to_string(),
+                        line: self.line,
+                        column: self.column,
                     },
                 }
             },
@@ -162,11 +186,15 @@ impl Lexer {
                         Token {
                             token_type: TokenType::OperatorLesserEqual,
                             literal: "<=".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     _ => Token {
                         token_type: TokenType::OperatorLesser,
                         literal: "<".to_string(),
+                        line: self.line,
+                        column: self.column,
                     },
                 }
             },
@@ -177,17 +205,23 @@ impl Lexer {
                         Token {
                             token_type: TokenType::OperatorGreaterEqual,
                             literal: ">=".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     _ => Token {
                         token_type: TokenType::OperatorGreater,
                         literal: ">".to_string(),
+                        line: self.line,
+                        column: self.column,
                     },
                 }
             },
             b'*' => Token {
                 token_type: TokenType::Asterisk,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b':' => {
                 if self.peek_char() == b':' {
@@ -195,11 +229,15 @@ impl Lexer {
                     Token {
                         token_type: TokenType::NamespaceDelimiter,
                         literal: "::".to_string(),
+                        line: self.line,
+                        column: self.column,
                     }
                 } else {
                     Token {
                         token_type: TokenType::Colon,
-                        literal: self.ch.to_string(),
+                        literal: ch.to_string(),
+                        line: self.line,
+                        column: self.column,
                     }
                 }
             },
@@ -210,6 +248,8 @@ impl Lexer {
                         Token {
                             token_type: TokenType::RightArrow,
                             literal: "=>".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     b'=' => {
@@ -217,11 +257,15 @@ impl Lexer {
                         Token {
                             token_type: TokenType::OperatorEqual,
                             literal: "==".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     _ => Token {
                         token_type: TokenType::OperatorAssignment,
-                        literal: self.ch.to_string(),
+                        literal: ch.to_string(),
+                        line: self.line,
+                        column: self.column,
                     },
                 }
             },
@@ -232,156 +276,208 @@ impl Lexer {
                         Token {
                             token_type: TokenType::RightArrow,
                             literal: "->".to_string(),
+                            line: self.line,
+                            column: self.column,
                         }
                     },
                     _ => Token {
                         token_type: TokenType::OperatorMinus,
-                        literal: self.ch.to_string(),
+                        literal: ch.to_string(),
+                        line: self.line,
+                        column: self.column,
                     },
                 }
             },
             b';' => Token {
                 token_type: TokenType::Semicolon,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b'(' => Token {
                 token_type: TokenType::LeftParenthesis,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b')' => Token {
                 token_type: TokenType::RightParenthesis,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b',' => Token {
                 token_type: TokenType::Comma,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b'+' => Token {
                 token_type: TokenType::OperatorPlus,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b'{' => Token {
                 token_type: TokenType::LeftBrace,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b'}' => Token {
                 token_type: TokenType::RightBrace,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column, 
             },
             0 => Token {
                 token_type: TokenType::EOF,
                 literal: "".to_string(),
+                line: self.line,
+                column: self.column,
             },
             b'0'..=b'9' => {
                 let mut literal = String::new();
-                while self.ch.is_ascii_digit() {
-                    literal.push(self.ch as char);
-                    self.read_char();
+                let line = self.line;
+                let column = self.column;
+                while ch.is_ascii_digit() {
+                    literal.push(ch as char);
+                    ch = self.read_char();
                 }
                 // if the next token is a '.', this is a float literal
-                if self.ch == b'.' || self.ch == b'f' {
-                    literal.push(self.ch as char);
-                    self.read_char();
-                    while self.ch.is_ascii_digit() {
-                        literal.push(self.ch as char);
-                        self.read_char();
+                if ch == b'.' || ch == b'f' {
+                    literal.push(ch as char);
+                    ch = self.read_char();
+                    while ch.is_ascii_digit() {
+                        literal.push(ch as char);
+                        ch = self.read_char();
                     }
                     Token {
                         token_type: TokenType::LiteralFloat,
-                        literal: literal,
+                        literal: literal.clone(),
+                        line,
+                        column
                     }
                 } else {
                     Token {
                         token_type: TokenType::LiteralInteger,
-                        literal: literal,
+                        literal: literal.clone(),
+                        line,
+                        column
                     }
                 }
             }
             b'"' => {
                 let mut literal = String::new();
+                let line = self.line;
+                let column = self.column;
                 self.read_char();
-                while self.ch != b'"' {
-                    literal.push(self.ch as char);
-                    self.read_char();
+                while ch != b'"' {
+                    literal.push(ch as char);
+                    ch = self.read_char();
                 }
                 self.read_char();
                 Token {
                     token_type: TokenType::LiteralString,
-                    literal: literal,
+                    literal: literal.clone(),
+                    line,
+                    column,
                 }
             },
             b'/' => Token {
                 token_type: TokenType::ForwardSlash,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
             b'a'..=b'z' | b'A'..=b'Z' | b'_' => {
                 let mut literal = String::new();
-                while self.ch.is_ascii_alphanumeric() || self.ch == b'_' {
-                    literal.push(self.ch as char);
-                    self.read_char();
+                let line = self.line;
+                let column = self.column;
+                while ch.is_ascii_alphanumeric() || ch == b'_' {
+                    literal.push(ch as char);
+                    ch = self.read_char();
                 }
                 match literal.as_str() {
                     "true" => Token {
                         token_type: TokenType::LiteralBool,
                         literal: literal,
+                        line, column
                     },
                     "false" => Token {
                         token_type: TokenType::LiteralBool,
                         literal: literal,
+                        line, column
                     },
                     "import" => Token {
                         token_type: TokenType::KeywordImport,
                         literal: literal,
+                        line, column
                     },
                     "void" => Token {
                         token_type: TokenType::KeywordVoid,
                         literal: literal,
+                        line, column
                     },
                     "int" => Token {
                         token_type: TokenType::KeywordInt,
                         literal: literal,
+                        line, column
                     },
                     "float" => Token {
                         token_type: TokenType::KeywordFloat,
                         literal: literal,
+                        line, column
                     },
                     "string" => Token {
                         token_type: TokenType::KeywordString,
                         literal: literal,
+                        line, column
                     },
                     "bool" => Token {
                         token_type: TokenType::KeywordBool,
                         literal: literal,
+                        line, column
                     },
                     "fun" => Token {
                         token_type: TokenType::KeywordFunction,
                         literal: literal,
+                        line, column
                     },
                     "let" => Token {
                         token_type: TokenType::KeywordLet,
                         literal: literal,
+                        line, column
                     },
                     _ => Token {
                         token_type: TokenType::Identifier,
                         literal: literal,
+                        line, column
                     },
                 }
             }
             _ => Token {
                 token_type: TokenType::Illegal,
-                literal: self.ch.to_string(),
+                literal: ch.to_string(),
+                line: self.line,
+                column: self.column,
             },
-        };
-        self.read_char();
-        token
-    }
-    fn read_char(&mut self) {
-        if self.read_position >= self.input.len() {
-            self.ch = 0;
-        } else {
-            self.ch = self.input.as_bytes()[self.read_position];
         }
-        self.position = self.read_position;
-        self.read_position += 1;
+    }
+    fn read_char(&mut self) -> u8 {
+        if self.read_position >= self.input.len() {
+            0
+        } else {
+            let ch = self.input.as_bytes()[self.read_position];
+            self.position = self.read_position;
+            self.read_position += 1;
+            if ch == b'\n' {
+                self.line += 1;
+                self.column = 1;
+            } else {
+                self.column += 1;
+            }
+            ch
+        }
     }
 }
